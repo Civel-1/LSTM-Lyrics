@@ -43,7 +43,7 @@ for i in range(len(songs_name)):
     JSON_object = json.loads(data_final)
     print(JSON_object)
     lyrics = JSON_object['message']['body']['lyrics']['lyrics_body']
-    lyrics_final = lyrics[:-58]
+    lyrics_final = lyrics[:-74]
     lyrics_final.replace('\'', "'")
     print(lyrics_final)
     file.write(lyrics_final)

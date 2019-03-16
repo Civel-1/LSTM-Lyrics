@@ -3,6 +3,7 @@ from keras.layers import LSTM, Bidirectional, Embedding, Dense, Dropout, Activat
 from keras.callbacks import LambdaCallback, EarlyStopping
 from keras.models import Sequential
 import numpy as np
+from matplotlib import pyplot as plt
 import io
 
 # PATH PARAMETERS
@@ -25,6 +26,7 @@ ACTIVATION_FUNCTION = 'softmax'
 # TRAINING PARAMETERS
 BATCH_SIZE = 32
 LOSS_FUNCTION = 'sparse_categorical_crossentropy'
+NUMBER_EPOCH = 5
 
 # RESULT PARAMETERS
 RESULT_LEN = 50
@@ -138,12 +140,12 @@ def train_model():
     early_stopping = EarlyStopping(monitor='val_acc', patience=20)
     callbacks_list = [print_callback, early_stopping]
 
-    model.fit_generator(generator(sentences, next_words, BATCH_SIZE),
-                        steps_per_epoch=int(len(sentences) / BATCH_SIZE) + 1,
-                        epochs=5,
-                        callbacks=callbacks_list,
-                        validation_data=generator(sentences_test, next_words_test, BATCH_SIZE),
-                        validation_steps=int(len(sentences_test) / BATCH_SIZE) + 1)
+    return model.fit_generator(generator(sentences, next_words, BATCH_SIZE),
+                               steps_per_epoch=int(len(sentences) / BATCH_SIZE) + 1,
+                               epochs=NUMBER_EPOCH,
+                               callbacks=callbacks_list,
+                               validation_data=generator(sentences_test, next_words_test, BATCH_SIZE),
+                               validation_steps=int(len(sentences_test) / BATCH_SIZE) + 1)
 
 
 # Fonction utilisée lors de l'entraînement du model. Permet de générer des données à entraîner et évaluer
@@ -210,6 +212,18 @@ def sample(preds, temperature=1.0):
     return np.argmax(probas)
 
 
+def print_result():
+    loss_values = history.history['loss']
+    epochs = range(1, len(loss_values) + 1)
+
+    plt.plot(epochs, loss_values, label='Training Loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.legend()
+
+    plt.show()
+
+
 # ---------------- MAIN --------------------
 
 # récupération des données
@@ -219,8 +233,8 @@ words, sentences, next_words = prepare_data()
 # Préparation des données d'entrainement et de test
 (sentences, next_words), (sentences_test, next_words_test) = shuffle_and_split_training_set(sentences, next_words)
 # création du réseau neuronal
-create_model()
+history = create_model()
 # entraînement et création d'échantillons
 output_file = open(OUTPUT_PATH, "w")
 train_model()
-
+print_result()
