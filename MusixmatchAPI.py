@@ -5,7 +5,6 @@ from urllib.request import urlopen
 base_url_get_song = "https://api.musixmatch.com/ws/1.1/matcher.lyrics.get?format=jsonp&callback=callback"
 track_search_parameter = "&q_track="
 artist_search_parameter = "&q_artist="
-# your api key
 api_key = "&apikey=a0aa2a16a2ea9135a13e01e2f551dee5"
 
 
