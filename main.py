@@ -11,9 +11,8 @@ CORPUS_PATH = "kanye_west.txt"
 OUTPUT_PATH = "examples.txt"
 
 # DATA PARAMETERS
-MIN_WORD_FREQUENCY = 5
-SEQUENCE_LEN = 5
-STEP = 1
+MIN_WORD_FREQUENCY = 2
+SEQUENCE_LEN = 2
 
 # EMBEDDING PARAMETERS
 OUTPUTDIM = 1024
@@ -26,7 +25,7 @@ ACTIVATION_FUNCTION = 'softmax'
 # TRAINING PARAMETERS
 BATCH_SIZE = 32
 LOSS_FUNCTION = 'sparse_categorical_crossentropy'
-NUMBER_EPOCH = 5
+NUMBER_EPOCH = 30
 
 # RESULT PARAMETERS
 RESULT_LEN = 50
@@ -42,6 +41,10 @@ def get_data():
     # soit considéré comme un mot à part entier
     with io.open(CORPUS_PATH, encoding='utf-8') as f:
         text = f.read().lower().replace('\n', ' \n ')
+        text = text.replace("(", "")
+        text = text.replace(")", "")
+        text = text.replace(",", "")
+        text = text.replace("...", " ... ")
     print('Données récupérées ! Longueur du corpus en charactères :', len(text))
     return text
 
@@ -81,8 +84,8 @@ def prepare_data():
             next_words.append(text_in_words[i + SEQUENCE_LEN])
         else:
             ignored = ignored + 1
-    print('Ignored sequences:', ignored)
-    print('Remaining sequences:', len(sentences))
+    print('Séquences ignorées :', ignored)
+    print('Séquences restantes :', len(sentences))
 
     # on crée des dictionnaires qui permettent d'associer chaque mot à un entier ( et un second pour chaque entier à
     # un mot ). Cela permet de manipuler des données moins lourdes et donc gagner en temps de traitement.
@@ -95,7 +98,7 @@ def prepare_data():
     return words, sentences, next_words
 
 
-# percentage-test signifique que 2% du corpus de phrases est retiré de la liste et utilisé comme données de test
+# percentage-test signifie que que 2% du corpus de phrases est retiré de la liste et utilisé comme données de test
 def shuffle_and_split_training_set(sentences_original, next_original, percentage_test=2):
     # mélange des phrases
     print('Mélange des phrases')
@@ -126,8 +129,8 @@ def create_model():
     model.add(Bidirectional(LSTM(OUTPUT_SPACE)))
     if DROPOUT > 0:
         model.add(Dropout(DROPOUT))
-    # on ajoute une couche d'activation densément connecté au layer précédent
     model.add(Dense(len(words)))
+    # on ajoute une couche d'activation densément connecté au layer précédent
     model.add(Activation(ACTIVATION_FUNCTION))
 
 
@@ -140,13 +143,13 @@ def train_model():
     early_stopping = EarlyStopping(monitor='val_acc', patience=20)
     callbacks_list = [print_callback, early_stopping]
 
-    return model.fit_generator(generator(sentences, next_words, BATCH_SIZE),
+    history = model.fit_generator(generator(sentences, next_words, BATCH_SIZE),
                                steps_per_epoch=int(len(sentences) / BATCH_SIZE) + 1,
                                epochs=NUMBER_EPOCH,
                                callbacks=callbacks_list,
                                validation_data=generator(sentences_test, next_words_test, BATCH_SIZE),
                                validation_steps=int(len(sentences_test) / BATCH_SIZE) + 1)
-
+    print_result(history)
 
 # Fonction utilisée lors de l'entraînement du model. Permet de générer des données à entraîner et évaluer
 # les generator permettent d'itérer sur une liste une seule fois, ils itèrent puis oublie ce qu'ils avaient en mémoire
@@ -212,13 +215,21 @@ def sample(preds, temperature=1.0):
     return np.argmax(probas)
 
 
-def print_result():
+def print_result(history):
     loss_values = history.history['loss']
+    acc_values = history.history['acc']
     epochs = range(1, len(loss_values) + 1)
 
+    plt.subplot(2, 1, 1)
     plt.plot(epochs, loss_values, label='Training Loss')
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
+    plt.legend()
+
+    plt.subplot(2, 1, 2)
+    plt.plot(epochs, acc_values, label='Training Accuracy', color='red')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
     plt.legend()
 
     plt.show()
@@ -233,8 +244,8 @@ words, sentences, next_words = prepare_data()
 # Préparation des données d'entrainement et de test
 (sentences, next_words), (sentences_test, next_words_test) = shuffle_and_split_training_set(sentences, next_words)
 # création du réseau neuronal
-history = create_model()
+create_model()
 # entraînement et création d'échantillons
 output_file = open(OUTPUT_PATH, "w")
 train_model()
-print_result()
+
