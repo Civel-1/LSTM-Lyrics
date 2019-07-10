@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 import io
 
 # PATH PARAMETERS
-CORPUS_PATH = "kanye_west.txt"
+CORPUS_PATH = "lyrics/booba_lyrics.txt"
 OUTPUT_PATH = "examples.txt"
 
 # DATA PARAMETERS
@@ -26,6 +26,7 @@ ACTIVATION_FUNCTION = 'softmax'
 BATCH_SIZE = 32
 LOSS_FUNCTION = 'sparse_categorical_crossentropy'
 NUMBER_EPOCH = 30
+STEP = 1
 
 # RESULT PARAMETERS
 RESULT_LEN = 50
